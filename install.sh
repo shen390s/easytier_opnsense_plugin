@@ -193,6 +193,8 @@ install_plugin() {
     # MVC Controllers
     mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api"
     mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/forms"
+    install -m 0644 "${srcdir}/opnsense/mvc/app/controllers/OPNsense/EasyTier/IndexController.php" \
+        "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/IndexController.php"
     install -m 0644 "${srcdir}/opnsense/mvc/app/controllers/OPNsense/EasyTier/GeneralController.php" \
         "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/GeneralController.php"
     install -m 0644 "${srcdir}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api/GeneralController.php" \

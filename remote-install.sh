@@ -303,6 +303,8 @@ install -m 0755 "${SRCDIR}/etc/rc.d/easytier" "${PREFIX}/etc/rc.d/easytier"
 # MVC Controllers
 mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api"
 mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/forms"
+install -m 0644 "${SRCDIR}/opnsense/mvc/app/controllers/OPNsense/EasyTier/IndexController.php" \
+    "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/IndexController.php"
 install -m 0644 "${SRCDIR}/opnsense/mvc/app/controllers/OPNsense/EasyTier/GeneralController.php" \
     "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/GeneralController.php"
 install -m 0644 "${SRCDIR}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api/GeneralController.php" \
