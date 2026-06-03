@@ -178,32 +178,34 @@ try_download() {
 # FreeBSD binaries built on older versions generally run on newer versions (forward ABI compat)
 generate_fbsd_version_candidates() {
     local detected_ver="$1"
-    local major=$(echo "${detected_ver}" | cut -d'.' -f1)
-    local minor=$(echo "${detected_ver}" | cut -d'.' -f2)
-
-    # Start with exact match, then try older minor versions of same major,
-    # then try previous major versions (common release points)
-    # e.g., for 14.3: try 14.3, 14.2, 14.1, 14.0, 13.4, 13.3, 13.2, 13.1, 13.0
     local candidates=""
 
-    # Same major, from detected minor down to 0
-    local m=${minor}
-    while [ ${m} -ge 0 ]; do
-        candidates="${candidates} ${major}.${m}"
-        m=$((m - 1))
-    done
+    if [ -n "${detected_ver}" ]; then
+        local major=$(echo "${detected_ver}" | cut -d'.' -f1)
+        local minor=$(echo "${detected_ver}" | cut -d'.' -f2)
 
-    # Previous major versions (try common ones down to 13)
-    local prev_major=$((major - 1))
-    while [ ${prev_major} -ge 13 ]; do
-        # Try minor versions 4 down to 0 for previous major
-        local pm=4
-        while [ ${pm} -ge 0 ]; do
-            candidates="${candidates} ${prev_major}.${pm}"
-            pm=$((pm - 1))
+        # Same major, from detected minor down to 0
+        local m=${minor}
+        while [ ${m} -ge 0 ]; do
+            candidates="${candidates} ${major}.${m}"
+            m=$((m - 1))
         done
-        prev_major=$((prev_major - 1))
-    done
+
+        # Previous major versions (try common ones down to 13)
+        local prev_major=$((major - 1))
+        while [ ${prev_major} -ge 13 ]; do
+            # Try minor versions 4 down to 0 for previous major
+            local pm=4
+            while [ ${pm} -ge 0 ]; do
+                candidates="${candidates} ${prev_major}.${pm}"
+                pm=$((pm - 1))
+            done
+            prev_major=$((prev_major - 1))
+        done
+    else
+        # Could not detect version — try all common FreeBSD versions
+        candidates="14.4 14.3 14.2 14.1 14.0 13.4 13.3 13.2 13.1 13.0"
+    fi
 
     echo "${candidates}"
 }
@@ -219,7 +221,11 @@ download_binary_locally() {
     local candidates=$(generate_fbsd_version_candidates "${fbsd_ver}")
 
     info "Downloading EasyTier v${version} for FreeBSD/${arch}..."
-    info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
+    if [ -n "${fbsd_ver}" ]; then
+        info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
+    else
+        info "FreeBSD version unknown — trying all known versions..."
+    fi
 
     for candidate in ${candidates}; do
         local filename="easytier-freebsd-${candidate}-${arch}-v${version}.zip"
@@ -435,10 +441,12 @@ if [ -z "${EASYTIER_FBSD_VERSION}" ]; then
     info "Detecting FreeBSD version on remote host..."
     EASYTIER_FBSD_VERSION=$(detect_remote_freebsd_version)
     # Validate we got a reasonable version string (e.g., "13.2", "14.1")
-    if [ -z "${EASYTIER_FBSD_VERSION}" ] || ! echo "${EASYTIER_FBSD_VERSION}" | grep -qE '^[0-9]+\.[0-9]+$'; then
-        error "Could not detect FreeBSD version on remote host (got: '${EASYTIER_FBSD_VERSION}'). Please specify manually with -f (e.g., -f 13.2 or -f 14.2)"
+    if [ -n "${EASYTIER_FBSD_VERSION}" ] && echo "${EASYTIER_FBSD_VERSION}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+        info "  Detected FreeBSD ${EASYTIER_FBSD_VERSION}"
+    else
+        warn "Could not detect FreeBSD version (got: '${EASYTIER_FBSD_VERSION}'). Will try all known versions."
+        EASYTIER_FBSD_VERSION=""
     fi
-    info "  Detected FreeBSD ${EASYTIER_FBSD_VERSION}"
 fi
 
 info "=== EasyTier Remote Installer ==="

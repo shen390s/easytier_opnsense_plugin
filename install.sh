@@ -103,30 +103,39 @@ download_easytier() {
 
     # Generate candidate FreeBSD versions (exact match first, then older compatible)
     # FreeBSD binaries built on older versions generally run on newer versions
-    local major=$(echo "${fbsd_ver}" | cut -d'.' -f1)
-    local minor=$(echo "${fbsd_ver}" | cut -d'.' -f2)
     local candidates=""
+    if [ -n "${fbsd_ver}" ]; then
+        local major=$(echo "${fbsd_ver}" | cut -d'.' -f1)
+        local minor=$(echo "${fbsd_ver}" | cut -d'.' -f2)
 
-    # Same major, from detected minor down to 0
-    local m=${minor}
-    while [ ${m} -ge 0 ]; do
-        candidates="${candidates} ${major}.${m}"
-        m=$((m - 1))
-    done
-
-    # Previous major versions (try common ones down to 13)
-    local prev_major=$((major - 1))
-    while [ ${prev_major} -ge 13 ]; do
-        local pm=4
-        while [ ${pm} -ge 0 ]; do
-            candidates="${candidates} ${prev_major}.${pm}"
-            pm=$((pm - 1))
+        # Same major, from detected minor down to 0
+        local m=${minor}
+        while [ ${m} -ge 0 ]; do
+            candidates="${candidates} ${major}.${m}"
+            m=$((m - 1))
         done
-        prev_major=$((prev_major - 1))
-    done
+
+        # Previous major versions (try common ones down to 13)
+        local prev_major=$((major - 1))
+        while [ ${prev_major} -ge 13 ]; do
+            local pm=4
+            while [ ${pm} -ge 0 ]; do
+                candidates="${candidates} ${prev_major}.${pm}"
+                pm=$((pm - 1))
+            done
+            prev_major=$((prev_major - 1))
+        done
+    else
+        # Could not detect version — try all common FreeBSD versions
+        candidates="14.4 14.3 14.2 14.1 14.0 13.4 13.3 13.2 13.1 13.0"
+    fi
 
     info "Downloading EasyTier v${version} for FreeBSD/${arch}..."
-    info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
+    if [ -n "${fbsd_ver}" ]; then
+        info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
+    else
+        info "FreeBSD version unknown — trying all known versions..."
+    fi
 
     for candidate in ${candidates}; do
         local filename="easytier-freebsd-${candidate}-${arch}-v${version}.zip"
@@ -310,7 +319,7 @@ fi
 if [ -z "${EASYTIER_FBSD_VERSION}" ]; then
     EASYTIER_FBSD_VERSION=$(detect_freebsd_version)
     if [ -z "${EASYTIER_FBSD_VERSION}" ]; then
-        error "Could not detect FreeBSD version. Please specify with -f (e.g., -f 13.2)"
+        warn "Could not detect FreeBSD version. Will try all known versions."
     fi
 fi
 
