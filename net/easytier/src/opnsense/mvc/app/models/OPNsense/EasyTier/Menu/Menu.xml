@@ -1,6 +1,6 @@
 <menu>
     <VPN>
-        <EasyTier VisibleName="EasyTier" cssclass="fa fa-sitemap" url="/ui/easytier" order="50">
+        <EasyTier VisibleName="EasyTier" cssclass="fa fa-sitemap" url="/ui/easytier/general" order="50">
             <General VisibleName="General" url="/ui/easytier/general" order="1"/>
         </EasyTier>
     </VPN>
