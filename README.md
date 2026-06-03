@@ -14,33 +14,74 @@ An OPNsense plugin to install and manage [EasyTier](https://easytier.rs), a simp
 
 ## Quick Start
 
-### One-Command Install
+### Method 1: Remote Install (Recommended)
+
+Clone the repo on your **local PC** and deploy to the OPNsense box over SSH:
 
 ```bash
-# Clone the repository on your OPNsense box
+# On your local machine (Linux, macOS, or Windows WSL)
 git clone https://github.com/shen390s/easytier_opnsense_plugin.git
 cd easytier_opnsense_plugin
 
-# Install with your desired EasyTier version (FreeBSD version auto-detected)
+# Install to remote OPNsense box
+./remote-install.sh -H root@192.168.1.1 -v 2.6.4
+```
+
+That's it! The remote installer will:
+1. Connect to your OPNsense box via SSH
+2. Auto-detect the FreeBSD version on the remote system
+3. Download the correct EasyTier binary locally from GitHub
+4. Upload binaries and plugin files to the OPNsense box
+5. Deploy everything and restart configd
+
+#### Remote Install Options
+
+```bash
+# Basic remote install (auto-detects FreeBSD version)
+./remote-install.sh -H root@192.168.1.1 -v 2.6.4
+
+# With custom SSH port
+./remote-install.sh -H root@192.168.1.1 -v 2.6.4 -p 2222
+
+# With SSH key and explicit FreeBSD version
+./remote-install.sh -H root@opnsense.local -v 2.6.4 -f 14.2 -i ~/.ssh/opnsense_key
+
+# Remote uninstall
+./remote-install.sh -H root@192.168.1.1 -u
+
+# Show help
+./remote-install.sh -h
+```
+
+#### Remote Install Parameters
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `-H HOST` | Remote SSH host (required, e.g., `root@192.168.1.1`) | — |
+| `-v VERSION` | EasyTier version (required) | — |
+| `-p PORT` | SSH port | `22` |
+| `-f FBSD_VER` | FreeBSD version override | Auto-detected |
+| `-a ARCH` | Architecture | `x86_64` |
+| `-i KEY` | SSH private key file | — |
+| `-u` | Uninstall from remote | — |
+
+### Method 2: Local Install (On the OPNsense Box)
+
+If you prefer to run directly on the OPNsense system:
+
+```bash
+# SSH into your OPNsense box first
+ssh root@192.168.1.1
+
+# Clone and install
+git clone https://github.com/shen390s/easytier_opnsense_plugin.git
+cd easytier_opnsense_plugin
 ./install.sh -v 2.6.4
 ```
 
-That's it! The installer will:
-1. Auto-detect your FreeBSD version (e.g., 13.2, 14.1)
-2. Download the correct EasyTier binary from GitHub releases
-   (e.g., `easytier-freebsd-13.2-x86_64-v2.6.4.zip`)
-3. Install `easytier-core` and `easytier-cli` to `/usr/local/bin/`
-4. Deploy all OPNsense plugin files (controllers, models, views, templates)
-5. Restart configd to activate the plugin
-
-Navigate to **VPN → EasyTier** in the OPNsense web UI to configure.
-
-### Install Options
+#### Local Install Options
 
 ```bash
-# Install a specific version (auto-detects FreeBSD version)
-./install.sh -v 2.6.4
-
 # Install with explicit FreeBSD version
 ./install.sh -v 2.6.4 -f 14.2
 
@@ -59,6 +100,12 @@ Navigate to **VPN → EasyTier** in the OPNsense web UI to configure.
 To upgrade to a newer version of EasyTier:
 
 ```bash
+# Remote upgrade from local PC
+cd easytier_opnsense_plugin
+git pull
+./remote-install.sh -H root@192.168.1.1 -v 2.6.4
+
+# Or local upgrade on OPNsense box
 cd easytier_opnsense_plugin
 git pull
 ./install.sh -v 2.6.4
@@ -69,6 +116,10 @@ The installer will replace the existing binaries and plugin files.
 ### Uninstall
 
 ```bash
+# Remote uninstall
+./remote-install.sh -H root@192.168.1.1 -u
+
+# Or local uninstall on OPNsense box
 ./install.sh -u
 ```
 
@@ -82,9 +133,15 @@ This will:
 ## Prerequisites
 
 - OPNsense 23.7 or later (FreeBSD-based)
-- Root access (SSH or console)
-- Internet connectivity (to download EasyTier release from GitHub)
-- `git` (to clone this repository; alternatively download as ZIP)
+- **For remote install (from your local PC):**
+  - SSH access to the OPNsense box (key-based auth recommended)
+  - `curl` or `wget` (to download the EasyTier binary)
+  - `unzip` (to extract the archive)
+  - `git` (to clone this repository)
+- **For local install (on the OPNsense box):**
+  - Root access (SSH or console)
+  - Internet connectivity (to download from GitHub)
+  - `git` (or download this repo as ZIP)
 
 ## Configuration Guide
 
@@ -278,7 +335,8 @@ easytier-cli --rpc-portal 127.0.0.1:15888 connector
 
 ```
 easytier_opnsense_plugin/
-├── install.sh                        # Automated installer/uninstaller
+├── install.sh                        # Local automated installer/uninstaller
+├── remote-install.sh                 # Remote SSH installer (run from local PC)
 ├── README.md
 ├── LICENSE
 └── net/easytier/
