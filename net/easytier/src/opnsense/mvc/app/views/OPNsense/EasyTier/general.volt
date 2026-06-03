@@ -32,13 +32,10 @@
             $('.selectpicker').selectpicker('refresh');
         });
 
-        updateServiceControlUI('easytier');
-
         $("#saveAct").click(function(){
             saveFormToEndpoint(url="/api/easytier/general/set", formid='frm_GeneralSettings', callback_ok=function(){
                 $("#saveAct_progress").addClass("fa fa-spinner fa-pulse");
                 ajaxCall(url="/api/easytier/service/reconfigure", sendData={}, callback=function(data,status) {
-                    updateServiceControlUI('easytier');
                     $("#saveAct_progress").removeClass("fa fa-spinner fa-pulse");
                 });
             });
