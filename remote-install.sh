@@ -101,9 +101,9 @@ setup_ssh_multiplexing() {
     SSH_OPTS="${SSH_OPTS} -o ControlPath=${SSH_CONTROL_PATH}"
 
     info "Establishing SSH connection to ${REMOTE_HOST}..."
-    ssh ${SSH_OPTS} -p "${REMOTE_PORT}" -o ControlMaster=yes -o ControlPersist=300 \
-        "${REMOTE_HOST}" "echo ok" >/dev/null
-    if [ $? -ne 0 ]; then
+    # Note: do NOT redirect stdout/stderr here so password prompt is visible
+    if ! ssh ${SSH_OPTS} -p "${REMOTE_PORT}" -o ControlMaster=yes -o ControlPersist=300 \
+        "${REMOTE_HOST}" "true"; then
         error "Failed to establish SSH connection to ${REMOTE_HOST}"
     fi
     info "  SSH connection established (multiplexed)."
@@ -112,7 +112,7 @@ setup_ssh_multiplexing() {
 # Cleanup SSH multiplexed connection
 cleanup_ssh_multiplexing() {
     if [ -n "${SSH_CONTROL_PATH}" ]; then
-        ssh ${SSH_OPTS} -p "${REMOTE_PORT}" -O exit "${REMOTE_HOST}" 2>/dev/null || true
+        ssh -o ControlPath="${SSH_CONTROL_PATH}" -p "${REMOTE_PORT}" -O exit "${REMOTE_HOST}" 2>/dev/null || true
     fi
 }
 
@@ -130,20 +130,20 @@ check_local_dependencies() {
 }
 
 check_remote_connectivity() {
-    info "Testing SSH connectivity to ${REMOTE_HOST}..."
-    if ! remote_exec "echo ok" >/dev/null 2>&1; then
-        error "Cannot connect to ${REMOTE_HOST} via SSH (port ${REMOTE_PORT}). Check host, credentials, and network."
+    # Connection already verified by setup_ssh_multiplexing
+    # This is a quick sanity check using the multiplexed connection
+    if ! remote_exec "true" 2>/dev/null; then
+        error "SSH multiplexed connection lost to ${REMOTE_HOST}"
     fi
-    info "  SSH connection verified."
 }
 
 detect_remote_freebsd_version() {
     local fbsd_ver=""
     # Try freebsd-version first, then fall back to uname -r
-    # Run both in a single SSH session to avoid multiple password prompts
-    fbsd_ver=$(remote_exec "fbsd_ver=\$(freebsd-version -u 2>/dev/null | cut -d'-' -f1 | cut -d'.' -f1,2); if [ -z \"\$fbsd_ver\" ]; then fbsd_ver=\$(uname -r | cut -d'-' -f1 | cut -d'.' -f1,2); fi; echo \"\$fbsd_ver\"" 2>/dev/null || true)
-    # Strip any whitespace/control characters
-    fbsd_ver=$(echo "${fbsd_ver}" | tr -d '[:space:][:cntrl:]')
+    # Run both checks in a single SSH command to be efficient
+    fbsd_ver=$(remote_exec "fbsd_ver=\$(freebsd-version -u 2>/dev/null | cut -d'-' -f1); if [ -z \"\$fbsd_ver\" ]; then fbsd_ver=\$(uname -r | cut -d'-' -f1); fi; echo \"\$fbsd_ver\"" 2>/dev/null) || true
+    # Strip any whitespace/control characters and extract major.minor
+    fbsd_ver=$(echo "${fbsd_ver}" | tr -d '[:cntrl:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | cut -d'.' -f1,2)
     echo "${fbsd_ver}"
 }
 
