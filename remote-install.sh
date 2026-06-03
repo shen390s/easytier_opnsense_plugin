@@ -159,32 +159,83 @@ detect_remote_freebsd_version() {
     echo "${fbsd_ver}"
 }
 
+# Try to download a URL, return 0 on success, 1 on failure
+try_download() {
+    local url="$1"
+    local output="$2"
+
+    if command -v curl >/dev/null 2>&1; then
+        curl -fSL -o "${output}" "${url}" 2>/dev/null && return 0
+    elif command -v wget >/dev/null 2>&1; then
+        wget -q -O "${output}" "${url}" 2>/dev/null && return 0
+    elif command -v fetch >/dev/null 2>&1; then
+        fetch -o "${output}" "${url}" 2>/dev/null && return 0
+    fi
+    return 1
+}
+
+# Generate a list of FreeBSD versions to try, from exact match down to older compatible versions
+# FreeBSD binaries built on older versions generally run on newer versions (forward ABI compat)
+generate_fbsd_version_candidates() {
+    local detected_ver="$1"
+    local major=$(echo "${detected_ver}" | cut -d'.' -f1)
+    local minor=$(echo "${detected_ver}" | cut -d'.' -f2)
+
+    # Start with exact match, then try older minor versions of same major,
+    # then try previous major versions (common release points)
+    # e.g., for 14.3: try 14.3, 14.2, 14.1, 14.0, 13.4, 13.3, 13.2, 13.1, 13.0
+    local candidates=""
+
+    # Same major, from detected minor down to 0
+    local m=${minor}
+    while [ ${m} -ge 0 ]; do
+        candidates="${candidates} ${major}.${m}"
+        m=$((m - 1))
+    done
+
+    # Previous major versions (try common ones down to 13)
+    local prev_major=$((major - 1))
+    while [ ${prev_major} -ge 13 ]; do
+        # Try minor versions 4 down to 0 for previous major
+        local pm=4
+        while [ ${pm} -ge 0 ]; do
+            candidates="${candidates} ${prev_major}.${pm}"
+            pm=$((pm - 1))
+        done
+        prev_major=$((prev_major - 1))
+    done
+
+    echo "${candidates}"
+}
+
 download_binary_locally() {
     local version="$1"
     local arch="$2"
     local fbsd_ver="$3"
-    local filename="easytier-freebsd-${fbsd_ver}-${arch}-v${version}.zip"
-    local url="${GITHUB_BASE}/v${version}/${filename}"
     local tmpdir=$(mktemp -d)
+    local downloaded=0
 
-    info "Downloading EasyTier v${version} for FreeBSD ${fbsd_ver}/${arch}..."
-    info "URL: ${url}"
+    # Generate candidate FreeBSD versions (exact match first, then older compatible)
+    local candidates=$(generate_fbsd_version_candidates "${fbsd_ver}")
 
-    if command -v curl >/dev/null 2>&1; then
-        if ! curl -fSL -o "${tmpdir}/${filename}" "${url}"; then
-            rm -rf "${tmpdir}"
-            error "Failed to download. Check version number and network."
+    info "Downloading EasyTier v${version} for FreeBSD/${arch}..."
+    info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
+
+    for candidate in ${candidates}; do
+        local filename="easytier-freebsd-${candidate}-${arch}-v${version}.zip"
+        local url="${GITHUB_BASE}/v${version}/${filename}"
+
+        info "  Trying: ${filename}..."
+        if try_download "${url}" "${tmpdir}/${filename}"; then
+            info "  Found compatible binary: FreeBSD ${candidate}"
+            downloaded=1
+            break
         fi
-    elif command -v wget >/dev/null 2>&1; then
-        if ! wget -q -O "${tmpdir}/${filename}" "${url}"; then
-            rm -rf "${tmpdir}"
-            error "Failed to download. Check version number and network."
-        fi
-    elif command -v fetch >/dev/null 2>&1; then
-        if ! fetch -o "${tmpdir}/${filename}" "${url}"; then
-            rm -rf "${tmpdir}"
-            error "Failed to download. Check version number and network."
-        fi
+    done
+
+    if [ ${downloaded} -eq 0 ]; then
+        rm -rf "${tmpdir}"
+        error "No compatible EasyTier binary found for FreeBSD ${fbsd_ver}/${arch} v${version}. Tried versions: $(echo ${candidates} | tr ' ' ', ')"
     fi
 
     info "Extracting archive locally..."

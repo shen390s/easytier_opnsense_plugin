@@ -98,16 +98,51 @@ download_easytier() {
     local version="$1"
     local arch="$2"
     local fbsd_ver="$3"
-    local filename="easytier-freebsd-${fbsd_ver}-${arch}-v${version}.zip"
-    local url="${GITHUB_BASE}/v${version}/${filename}"
     local tmpdir=$(mktemp -d)
+    local downloaded=0
+
+    # Generate candidate FreeBSD versions (exact match first, then older compatible)
+    # FreeBSD binaries built on older versions generally run on newer versions
+    local major=$(echo "${fbsd_ver}" | cut -d'.' -f1)
+    local minor=$(echo "${fbsd_ver}" | cut -d'.' -f2)
+    local candidates=""
+
+    # Same major, from detected minor down to 0
+    local m=${minor}
+    while [ ${m} -ge 0 ]; do
+        candidates="${candidates} ${major}.${m}"
+        m=$((m - 1))
+    done
+
+    # Previous major versions (try common ones down to 13)
+    local prev_major=$((major - 1))
+    while [ ${prev_major} -ge 13 ]; do
+        local pm=4
+        while [ ${pm} -ge 0 ]; do
+            candidates="${candidates} ${prev_major}.${pm}"
+            pm=$((pm - 1))
+        done
+        prev_major=$((prev_major - 1))
+    done
 
     info "Downloading EasyTier v${version} for FreeBSD/${arch}..."
-    info "URL: ${url}"
+    info "Detected FreeBSD: ${fbsd_ver} — trying compatible binary versions..."
 
-    if ! fetch -o "${tmpdir}/${filename}" "${url}"; then
+    for candidate in ${candidates}; do
+        local filename="easytier-freebsd-${candidate}-${arch}-v${version}.zip"
+        local url="${GITHUB_BASE}/v${version}/${filename}"
+
+        info "  Trying: ${filename}..."
+        if fetch -o "${tmpdir}/${filename}" "${url}" 2>/dev/null; then
+            info "  Found compatible binary: FreeBSD ${candidate}"
+            downloaded=1
+            break
+        fi
+    done
+
+    if [ ${downloaded} -eq 0 ]; then
         rm -rf "${tmpdir}"
-        error "Failed to download EasyTier v${version}. Check the version number and network connectivity."
+        error "No compatible EasyTier binary found for FreeBSD ${fbsd_ver}/${arch} v${version}. Tried versions: $(echo ${candidates} | tr ' ' ', ')"
     fi
 
     info "Extracting archive..."
