@@ -4,68 +4,93 @@ An OPNsense plugin to install and manage [EasyTier](https://easytier.rs), a simp
 
 ## Features
 
+- **Fully Automated Installation** — Single command installs both the EasyTier binary and OPNsense plugin
+- **Version Selection** — Install any EasyTier release version by passing it as a parameter
 - **Web UI Management** — Configure EasyTier from the OPNsense GUI under VPN → EasyTier
 - **Service Control** — Start, stop, restart, and monitor the EasyTier service
 - **Full Configuration** — All major EasyTier options exposed through the web interface
-- **Auto-generated Config** — Configuration file is automatically generated from UI settings
 - **API Access** — RESTful API for automation and scripting
+- **Clean Uninstall** — Single command to completely remove the plugin and binaries
+
+## Quick Start
+
+### One-Command Install
+
+```bash
+# Clone the repository on your OPNsense box
+git clone https://github.com/shen390s/easytier_opnsense_plugin.git
+cd easytier_opnsense_plugin
+
+# Install with your desired EasyTier version (FreeBSD version auto-detected)
+./install.sh -v 2.6.4
+```
+
+That's it! The installer will:
+1. Auto-detect your FreeBSD version (e.g., 13.2, 14.1)
+2. Download the correct EasyTier binary from GitHub releases
+   (e.g., `easytier-freebsd-13.2-x86_64-v2.6.4.zip`)
+3. Install `easytier-core` and `easytier-cli` to `/usr/local/bin/`
+4. Deploy all OPNsense plugin files (controllers, models, views, templates)
+5. Restart configd to activate the plugin
+
+Navigate to **VPN → EasyTier** in the OPNsense web UI to configure.
+
+### Install Options
+
+```bash
+# Install a specific version (auto-detects FreeBSD version)
+./install.sh -v 2.6.4
+
+# Install with explicit FreeBSD version
+./install.sh -v 2.6.4 -f 14.2
+
+# Install for a different architecture
+./install.sh -v 2.6.4 -f 13.2 -a aarch64
+
+# Show help
+./install.sh -h
+
+# Uninstall everything
+./install.sh -u
+```
+
+### Upgrade
+
+To upgrade to a newer version of EasyTier:
+
+```bash
+cd easytier_opnsense_plugin
+git pull
+./install.sh -v 2.6.4
+```
+
+The installer will replace the existing binaries and plugin files.
+
+### Uninstall
+
+```bash
+./install.sh -u
+```
+
+This will:
+- Stop the EasyTier service
+- Remove all binaries (`easytier-core`, `easytier-cli`)
+- Remove all plugin files from OPNsense
+- Clean up configuration and PID files
+- Restart configd
 
 ## Prerequisites
 
-- OPNsense 23.7 or later
-- `easytier-core` binary (FreeBSD/amd64) — download from [EasyTier Releases](https://github.com/EasyTier/EasyTier/releases)
-
-## Installation
-
-### Step 1: Install the EasyTier Binary
-
-Download the FreeBSD/amd64 release of `easytier-core` and place it on your OPNsense system:
-
-```bash
-# Download the latest release (adjust version as needed)
-fetch https://github.com/EasyTier/EasyTier/releases/download/v2.x.x/easytier-freebsd-x86_64-v2.x.x.zip
-
-# Extract and install
-unzip easytier-freebsd-x86_64-v2.x.x.zip
-cp easytier-core /usr/local/bin/
-chmod +x /usr/local/bin/easytier-core
-```
-
-Verify the binary works:
-
-```bash
-easytier-core --help
-```
-
-### Step 2: Install the Plugin
-
-Copy the plugin files to your OPNsense system:
-
-```bash
-# Clone or download this repository
-git clone https://github.com/shen390s/easytier_opnsense_plugin.git
-
-# Copy plugin files to the OPNsense filesystem
-cp -r net/easytier/src/etc/rc.d/easytier /usr/local/etc/rc.d/
-cp -r net/easytier/src/opnsense/ /usr/local/opnsense/
-
-# Set correct permissions
-chmod +x /usr/local/etc/rc.d/easytier
-chmod +x /usr/local/opnsense/scripts/OPNsense/EasyTier/reconfigure.sh
-
-# Restart configd to pick up new actions
-service configd restart
-```
-
-### Step 3: Refresh the UI
-
-Navigate to your OPNsense web interface. The new menu item will appear under **VPN → EasyTier**.
+- OPNsense 23.7 or later (FreeBSD-based)
+- Root access (SSH or console)
+- Internet connectivity (to download EasyTier release from GitHub)
+- `git` (to clone this repository; alternatively download as ZIP)
 
 ## Configuration Guide
 
 ### Basic Setup — Join a Network
 
-The simplest configuration connects this node to an existing EasyTier network:
+After installation, configure via the web UI:
 
 1. Go to **VPN → EasyTier → General**
 2. Check **Enable EasyTier**
@@ -80,7 +105,7 @@ The simplest configuration connects this node to an existing EasyTier network:
 | Field | Description | Example |
 |-------|-------------|---------|
 | **Enable EasyTier** | Enable/disable the service | Checked |
-| **Network Name** | Virtual network identifier; nodes with the same name + secret join together | `office-network` |
+| **Network Name** | Virtual network identifier; nodes with same name + secret join together | `office-network` |
 | **Network Secret** | Shared secret for network authentication | `s3cur3-p@ss` |
 | **Hostname** | Optional friendly name for this node | `opnsense-gw` |
 | **IPv4 Address** | Static virtual IP in CIDR notation | `10.144.144.1/24` |
@@ -88,7 +113,7 @@ The simplest configuration connects this node to an existing EasyTier network:
 | **Default Protocol** | Default transport protocol | `udp`, `tcp`, `ws`, `wss` |
 | **Listeners** | Addresses this node listens on (comma-separated) | `udp://0.0.0.0:11010, tcp://0.0.0.0:11011` |
 | **Peer Nodes** | Remote peers to connect to (comma-separated) | `udp://1.2.3.4:11010, tcp://example.com:11010` |
-| **Proxy Networks** | Subnets to expose to the VPN (comma-separated CIDR) | `192.168.1.0/24, 10.0.0.0/16` |
+| **Proxy Networks** | Subnets to expose to the VPN (CIDR, comma-separated) | `192.168.1.0/24, 10.0.0.0/16` |
 | **RPC Portal** | Management API address | `127.0.0.1:15888` |
 | **External Node** | Public relay server URL | `tcp://public-server.example.com:11010` |
 | **Relay All Peer RPC** | Act as relay for all peer RPC traffic | Unchecked |
@@ -183,6 +208,7 @@ curl -k -u admin:password https://opnsense/api/easytier/service/status
 1. Verify the binary is installed:
    ```bash
    ls -la /usr/local/bin/easytier-core
+   easytier-core --version
    ```
 
 2. Check the configuration file was generated:
@@ -214,13 +240,12 @@ curl -k -u admin:password https://opnsense/api/easytier/service/status
    service configd restart
    ```
 
-2. Clear the UI cache by navigating to **System → Firmware → Status** and clicking "Audit now"
+2. Clear the UI cache: **System → Firmware → Status** → click "Audit now"
 
 3. Verify file permissions:
    ```bash
-   chown -R root:wheel /usr/local/opnsense/mvc/app/controllers/OPNsense/EasyTier/
-   chown -R root:wheel /usr/local/opnsense/mvc/app/models/OPNsense/EasyTier/
-   chown -R root:wheel /usr/local/opnsense/mvc/app/views/OPNsense/EasyTier/
+   ls -la /usr/local/opnsense/mvc/app/controllers/OPNsense/EasyTier/
+   ls -la /usr/local/opnsense/mvc/app/models/OPNsense/EasyTier/
    ```
 
 ### Check EasyTier node status
@@ -243,32 +268,47 @@ easytier-cli --rpc-portal 127.0.0.1:15888 connector
 | File | Purpose |
 |------|---------|
 | `/usr/local/bin/easytier-core` | EasyTier daemon binary |
+| `/usr/local/bin/easytier-cli` | EasyTier CLI management tool |
 | `/usr/local/etc/easytier.conf` | Generated configuration file |
 | `/usr/local/etc/rc.d/easytier` | Service control script |
 | `/var/run/easytier.pid` | PID file |
 | `/usr/local/opnsense/scripts/OPNsense/EasyTier/reconfigure.sh` | Reconfigure handler |
 
-## Uninstallation
+## Project Structure
 
-```bash
-# Stop the service
-service easytier stop
-
-# Remove plugin files
-rm -rf /usr/local/opnsense/mvc/app/controllers/OPNsense/EasyTier/
-rm -rf /usr/local/opnsense/mvc/app/models/OPNsense/EasyTier/
-rm -rf /usr/local/opnsense/mvc/app/views/OPNsense/EasyTier/
-rm -rf /usr/local/opnsense/scripts/OPNsense/EasyTier/
-rm -rf /usr/local/opnsense/service/conf/actions.d/actions_easytier.conf
-rm -rf /usr/local/opnsense/service/templates/OPNsense/EasyTier/
-rm -f /usr/local/etc/rc.d/easytier
-rm -f /usr/local/etc/easytier.conf
-
-# Optionally remove the binary
-rm -f /usr/local/bin/easytier-core
-
-# Restart configd
-service configd restart
+```
+easytier_opnsense_plugin/
+├── install.sh                        # Automated installer/uninstaller
+├── README.md
+├── LICENSE
+└── net/easytier/
+    ├── Makefile                      # OPNsense plugin metadata
+    ├── pkg-descr/pkg-descr          # Package description
+    ├── pkg-plist                    # Package file list
+    └── src/
+        ├── etc/rc.d/easytier        # FreeBSD service script
+        └── opnsense/
+            ├── mvc/app/
+            │   ├── controllers/OPNsense/EasyTier/
+            │   │   ├── Api/
+            │   │   │   ├── GeneralController.php
+            │   │   │   └── ServiceController.php
+            │   │   ├── GeneralController.php
+            │   │   └── forms/general.xml
+            │   ├── models/OPNsense/EasyTier/
+            │   │   ├── ACL/ACL.xml
+            │   │   ├── EasyTier.php
+            │   │   ├── EasyTier.xml
+            │   │   └── Menu/Menu.xml
+            │   └── views/OPNsense/EasyTier/
+            │       └── general.volt
+            ├── scripts/OPNsense/EasyTier/
+            │   └── reconfigure.sh
+            └── service/
+                ├── conf/actions.d/actions_easytier.conf
+                └── templates/OPNsense/EasyTier/
+                    ├── +TARGETS
+                    └── easytier.conf
 ```
 
 ## License
@@ -279,4 +319,5 @@ This project is licensed under the BSD 2-Clause License. See [LICENSE](LICENSE) 
 
 - [EasyTier Official Website](https://easytier.rs)
 - [EasyTier GitHub](https://github.com/EasyTier/EasyTier)
+- [EasyTier Releases (Download)](https://github.com/EasyTier/EasyTier/releases)
 - [OPNsense Plugin Development Guide](https://docs.opnsense.org/development/examples/helloworld.html)
