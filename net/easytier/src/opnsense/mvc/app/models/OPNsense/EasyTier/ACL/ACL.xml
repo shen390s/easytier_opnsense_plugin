@@ -1,0 +1,9 @@
+<acl>
+    <page-vpn-easytier>
+        <name>WebCfg - VPN: EasyTier</name>
+        <patterns>
+            <pattern>/ui/easytier/*</pattern>
+            <pattern>/api/easytier/*</pattern>
+        </patterns>
+    </page-vpn-easytier>
+</acl>

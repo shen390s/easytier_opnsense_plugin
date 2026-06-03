@@ -1,0 +1,128 @@
+<form>
+    <field>
+        <id>general.enabled</id>
+        <label>Enable EasyTier</label>
+        <type>checkbox</type>
+        <help>Enable or disable the EasyTier service.</help>
+    </field>
+    <field>
+        <id>general.network_name</id>
+        <label>Network Name</label>
+        <type>text</type>
+        <help>Name of the EasyTier virtual network. Nodes with the same network name and secret will join the same network.</help>
+    </field>
+    <field>
+        <id>general.network_secret</id>
+        <label>Network Secret</label>
+        <type>password</type>
+        <help>Secret key for the network. Only nodes with the same name and secret can communicate.</help>
+    </field>
+    <field>
+        <id>general.hostname</id>
+        <label>Hostname</label>
+        <type>text</type>
+        <help>Optional hostname for this node in the EasyTier network.</help>
+    </field>
+    <field>
+        <id>general.ipv4</id>
+        <label>IPv4 Address</label>
+        <type>text</type>
+        <help>Virtual IPv4 address for this node (CIDR format, e.g., 10.144.144.1/24). Leave blank for DHCP.</help>
+    </field>
+    <field>
+        <id>general.dhcp</id>
+        <label>Use DHCP</label>
+        <type>checkbox</type>
+        <help>Automatically assign an IPv4 address from the virtual DHCP server.</help>
+    </field>
+    <field>
+        <id>general.default_protocol</id>
+        <label>Default Protocol</label>
+        <type>dropdown</type>
+        <help>Default protocol for listeners and connections.</help>
+    </field>
+    <field>
+        <id>general.listeners</id>
+        <label>Listeners</label>
+        <type>text</type>
+        <help>Comma-separated list of listener URLs (e.g., udp://0.0.0.0:11010, tcp://0.0.0.0:11010).</help>
+    </field>
+    <field>
+        <id>general.peers</id>
+        <label>Peer Nodes</label>
+        <type>text</type>
+        <help>Comma-separated list of peer URLs to connect to (e.g., udp://192.168.1.1:11010, tcp://example.com:11010).</help>
+    </field>
+    <field>
+        <id>general.proxy_networks</id>
+        <label>Proxy Networks</label>
+        <type>text</type>
+        <help>Comma-separated list of networks to proxy in CIDR format (e.g., 192.168.1.0/24). Enables subnet proxy.</help>
+    </field>
+    <field>
+        <id>general.rpc_portal</id>
+        <label>RPC Portal</label>
+        <type>text</type>
+        <help>Address and port for the management RPC portal (default: 127.0.0.1:15888).</help>
+    </field>
+    <field>
+        <id>general.external_node</id>
+        <label>External Node</label>
+        <type>text</type>
+        <help>URL of an external node to use as a public relay server.</help>
+    </field>
+    <field>
+        <id>general.relay_all_peer_rpc</id>
+        <label>Relay All Peer RPC</label>
+        <type>checkbox</type>
+        <help>Allow this node to relay RPC traffic for all peers.</help>
+    </field>
+    <field>
+        <id>general.relay_network_whitelist</id>
+        <label>Relay Network Whitelist</label>
+        <type>text</type>
+        <help>Comma-separated list of network names allowed to relay through this node.</help>
+    </field>
+    <field>
+        <id>general.disable_p2p</id>
+        <label>Disable P2P</label>
+        <type>checkbox</type>
+        <help>Disable peer-to-peer connections, only use relay.</help>
+    </field>
+    <field>
+        <id>general.disable_udp_hole_punching</id>
+        <label>Disable UDP Hole Punching</label>
+        <type>checkbox</type>
+        <help>Disable UDP hole punching for NAT traversal.</help>
+    </field>
+    <field>
+        <id>general.multi_thread</id>
+        <label>Multi-Thread</label>
+        <type>checkbox</type>
+        <help>Use multi-threaded runtime for better performance.</help>
+    </field>
+    <field>
+        <id>general.latency_first</id>
+        <label>Latency First</label>
+        <type>checkbox</type>
+        <help>Prefer lower latency routes over higher bandwidth routes.</help>
+    </field>
+    <field>
+        <id>general.enable_exit_node</id>
+        <label>Enable Exit Node</label>
+        <type>checkbox</type>
+        <help>Allow this node to act as an exit node for internet traffic.</help>
+    </field>
+    <field>
+        <id>general.no_tun</id>
+        <label>No TUN Device</label>
+        <type>checkbox</type>
+        <help>Run without creating a TUN device (useful for relay-only or SOCKS5 mode).</help>
+    </field>
+    <field>
+        <id>general.socks5_portal</id>
+        <label>SOCKS5 Portal</label>
+        <type>text</type>
+        <help>Address and port for SOCKS5 proxy portal (e.g., 127.0.0.1:1080).</help>
+    </field>
+</form>

@@ -1,0 +1,66 @@
+#!/bin/sh
+
+# PROVIDE: easytier
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.d/easytier or /etc/rc.conf
+# to enable this service:
+#
+# easytier_enable (bool):   Set to NO by default.
+#                           Set it to YES to enable easytier.
+# easytier_config (str):    Configuration file path.
+#                           Default: /usr/local/etc/easytier.conf
+
+. /etc/rc.subr
+
+name="easytier"
+rcvar=easytier_enable
+
+load_rc_config $name
+
+: ${easytier_enable:="NO"}
+: ${easytier_config:="/usr/local/etc/easytier.conf"}
+
+pidfile="/var/run/${name}.pid"
+command="/usr/local/bin/easytier-core"
+command_args="--config-file ${easytier_config} &"
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+status_cmd="${name}_status"
+
+easytier_start()
+{
+    if [ ! -f "${easytier_config}" ]; then
+        echo "Configuration file ${easytier_config} not found."
+        return 1
+    fi
+
+    echo "Starting ${name}."
+    /usr/sbin/daemon -f -p ${pidfile} -t ${name} \
+        ${command} --config-file ${easytier_config}
+}
+
+easytier_stop()
+{
+    if [ -f "${pidfile}" ]; then
+        echo "Stopping ${name}."
+        kill $(cat ${pidfile}) 2>/dev/null
+        rm -f ${pidfile}
+    else
+        echo "${name} is not running."
+    fi
+}
+
+easytier_status()
+{
+    if [ -f "${pidfile}" ] && kill -0 $(cat ${pidfile}) 2>/dev/null; then
+        echo "${name} is running as pid $(cat ${pidfile})."
+    else
+        echo "${name} is not running."
+        return 1
+    fi
+}
+
+run_rc_command "$1"
