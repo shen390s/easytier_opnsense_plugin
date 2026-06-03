@@ -146,15 +146,16 @@ download_easytier() {
     fi
 
     info "Extracting archive..."
-    if ! unzip -o "${tmpdir}/${filename}" -d "${tmpdir}/easytier" >/dev/null 2>&1; then
+    if ! unzip -o "${tmpdir}/${filename}" -d "${tmpdir}" >/dev/null 2>&1; then
         rm -rf "${tmpdir}"
         error "Failed to extract archive. The download may be corrupted."
     fi
 
-    # Find and install binaries
+    # Find and install binaries (search entire tmpdir — archive extracts to a subdirectory
+    # like easytier-freebsd-13.2-x86_64/ whose name varies by version)
     info "Installing EasyTier binaries..."
     for binary in easytier-core easytier-cli; do
-        local binpath=$(find "${tmpdir}/easytier" -name "${binary}" -type f | head -1)
+        local binpath=$(find "${tmpdir}" -name "${binary}" -type f | head -1)
         if [ -n "${binpath}" ]; then
             install -m 0755 "${binpath}" "${PREFIX}/bin/${binary}"
             info "  Installed ${PREFIX}/bin/${binary}"

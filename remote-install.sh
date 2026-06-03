@@ -240,13 +240,13 @@ download_binary_locally() {
 
     info "Extracting archive locally..."
     if command -v unzip >/dev/null 2>&1; then
-        unzip -o "${tmpdir}/${filename}" -d "${tmpdir}/easytier" >/dev/null 2>&1
+        unzip -o "${tmpdir}/${filename}" -d "${tmpdir}" >/dev/null 2>&1
     else
         # Try with python as fallback
         python3 -c "
 import zipfile, sys
 with zipfile.ZipFile('${tmpdir}/${filename}', 'r') as z:
-    z.extractall('${tmpdir}/easytier')
+    z.extractall('${tmpdir}')
 " 2>/dev/null || error "Cannot extract ZIP. Install 'unzip' or 'python3'."
     fi
 
@@ -262,10 +262,11 @@ install_remote() {
         error "Plugin source directory not found at ${srcdir}. Run from the repository root."
     fi
 
-    # Upload binaries
+    # Upload binaries (search entire tmpdir — archive extracts to a subdirectory
+    # like easytier-freebsd-13.2-x86_64/ whose name varies by version)
     info "Uploading EasyTier binaries to remote host..."
     for binary in easytier-core easytier-cli; do
-        local binpath=$(find "${tmpdir}/easytier" -name "${binary}" -type f | head -1)
+        local binpath=$(find "${tmpdir}" -name "${binary}" -type f | head -1)
         if [ -n "${binpath}" ]; then
             remote_copy "${binpath}" "/tmp/${binary}"
             remote_exec "install -m 0755 /tmp/${binary} ${PREFIX}/bin/${binary} && rm /tmp/${binary}"
