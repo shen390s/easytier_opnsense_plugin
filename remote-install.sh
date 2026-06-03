@@ -95,6 +95,27 @@ remote_copy_dir() {
     scp ${SSH_OPTS} -P "${REMOTE_PORT}" -r "$1" "${REMOTE_HOST}:$2"
 }
 
+# Setup SSH connection multiplexing to avoid repeated password prompts
+setup_ssh_multiplexing() {
+    SSH_CONTROL_PATH="/tmp/easytier_ssh_$$_%h_%p_%r"
+    SSH_OPTS="${SSH_OPTS} -o ControlPath=${SSH_CONTROL_PATH}"
+
+    info "Establishing SSH connection to ${REMOTE_HOST}..."
+    ssh ${SSH_OPTS} -p "${REMOTE_PORT}" -o ControlMaster=yes -o ControlPersist=300 \
+        "${REMOTE_HOST}" "echo ok" >/dev/null
+    if [ $? -ne 0 ]; then
+        error "Failed to establish SSH connection to ${REMOTE_HOST}"
+    fi
+    info "  SSH connection established (multiplexed)."
+}
+
+# Cleanup SSH multiplexed connection
+cleanup_ssh_multiplexing() {
+    if [ -n "${SSH_CONTROL_PATH}" ]; then
+        ssh ${SSH_OPTS} -p "${REMOTE_PORT}" -O exit "${REMOTE_HOST}" 2>/dev/null || true
+    fi
+}
+
 check_local_dependencies() {
     for cmd in ssh scp; do
         if ! command -v "$cmd" >/dev/null 2>&1; then
@@ -113,15 +134,16 @@ check_remote_connectivity() {
     if ! remote_exec "echo ok" >/dev/null 2>&1; then
         error "Cannot connect to ${REMOTE_HOST} via SSH (port ${REMOTE_PORT}). Check host, credentials, and network."
     fi
-    info "  SSH connection successful."
+    info "  SSH connection verified."
 }
 
 detect_remote_freebsd_version() {
     local fbsd_ver=""
-    fbsd_ver=$(remote_exec "freebsd-version -u 2>/dev/null | cut -d'-' -f1 | cut -d'.' -f1,2" 2>/dev/null)
-    if [ -z "${fbsd_ver}" ]; then
-        fbsd_ver=$(remote_exec "uname -r | cut -d'-' -f1 | cut -d'.' -f1,2" 2>/dev/null)
-    fi
+    # Try freebsd-version first, then fall back to uname -r
+    # Run both in a single SSH session to avoid multiple password prompts
+    fbsd_ver=$(remote_exec "fbsd_ver=\$(freebsd-version -u 2>/dev/null | cut -d'-' -f1 | cut -d'.' -f1,2); if [ -z \"\$fbsd_ver\" ]; then fbsd_ver=\$(uname -r | cut -d'-' -f1 | cut -d'.' -f1,2); fi; echo \"\$fbsd_ver\"" 2>/dev/null || true)
+    # Strip any whitespace/control characters
+    fbsd_ver=$(echo "${fbsd_ver}" | tr -d '[:space:][:cntrl:]')
     echo "${fbsd_ver}"
 }
 
@@ -326,6 +348,10 @@ fi
 # Check local dependencies
 check_local_dependencies
 
+# Setup SSH multiplexing (single password prompt for all operations)
+setup_ssh_multiplexing
+trap cleanup_ssh_multiplexing EXIT
+
 # Check SSH connectivity
 check_remote_connectivity
 
@@ -344,8 +370,9 @@ fi
 if [ -z "${EASYTIER_FBSD_VERSION}" ]; then
     info "Detecting FreeBSD version on remote host..."
     EASYTIER_FBSD_VERSION=$(detect_remote_freebsd_version)
-    if [ -z "${EASYTIER_FBSD_VERSION}" ]; then
-        error "Could not detect FreeBSD version on remote. Specify with -f (e.g., -f 13.2)"
+    # Validate we got a reasonable version string (e.g., "13.2", "14.1")
+    if [ -z "${EASYTIER_FBSD_VERSION}" ] || ! echo "${EASYTIER_FBSD_VERSION}" | grep -qE '^[0-9]+\.[0-9]+$'; then
+        error "Could not detect FreeBSD version on remote host (got: '${EASYTIER_FBSD_VERSION}'). Please specify manually with -f (e.g., -f 13.2 or -f 14.2)"
     fi
     info "  Detected FreeBSD ${EASYTIER_FBSD_VERSION}"
 fi
