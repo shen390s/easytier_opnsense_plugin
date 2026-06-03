@@ -138,12 +138,24 @@ check_remote_connectivity() {
 }
 
 detect_remote_freebsd_version() {
+    local raw_ver=""
     local fbsd_ver=""
-    # Try freebsd-version first, then fall back to uname -r
-    # Run both checks in a single SSH command to be efficient
-    fbsd_ver=$(remote_exec "fbsd_ver=\$(freebsd-version -u 2>/dev/null | cut -d'-' -f1); if [ -z \"\$fbsd_ver\" ]; then fbsd_ver=\$(uname -r | cut -d'-' -f1); fi; echo \"\$fbsd_ver\"" 2>/dev/null) || true
-    # Strip any whitespace/control characters and extract major.minor
-    fbsd_ver=$(echo "${fbsd_ver}" | tr -d '[:cntrl:]' | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' | cut -d'.' -f1,2)
+
+    # Run the simplest possible command on remote — no pipes, no subshells
+    # Try freebsd-version first
+    raw_ver=$(remote_exec "freebsd-version -u" 2>/dev/null) || true
+
+    # If that failed, try uname -r
+    if [ -z "${raw_ver}" ]; then
+        raw_ver=$(remote_exec "uname -r" 2>/dev/null) || true
+    fi
+
+    # Process locally: "14.3-RELEASE-p8" -> "14.3"
+    if [ -n "${raw_ver}" ]; then
+        # Remove control chars, take part before first '-', then major.minor
+        fbsd_ver=$(printf '%s' "${raw_ver}" | tr -d '[:cntrl:]' | tr -d ' ' | cut -d'-' -f1 | cut -d'.' -f1,2)
+    fi
+
     echo "${fbsd_ver}"
 }
 
