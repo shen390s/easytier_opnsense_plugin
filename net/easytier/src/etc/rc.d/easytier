@@ -1,0 +1,82 @@
+#!/bin/sh
+
+# PROVIDE: easytier
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# EasyTier service script for OPNsense
+# Service lifecycle is managed by configd
+
+. /etc/rc.subr
+
+name="easytier"
+rcvar=easytier_enable
+
+load_rc_config $name
+
+# Force enable - configd controls whether to call start/stop
+easytier_enable="YES"
+
+: ${easytier_config:="/usr/local/etc/easytier.conf"}
+
+pidfile="/var/run/${name}.pid"
+command="/usr/local/bin/easytier-core"
+
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
+status_cmd="${name}_status"
+restart_cmd="${name}_restart"
+extra_commands="status"
+
+easytier_start()
+{
+    if [ ! -f "${easytier_config}" ]; then
+        echo "Configuration file ${easytier_config} not found."
+        return 1
+    fi
+
+    echo "Starting ${name}."
+    /usr/sbin/daemon -f -p ${pidfile} -t ${name} \
+        ${command} --config-file ${easytier_config}
+}
+
+easytier_stop()
+{
+    if [ -f "${pidfile}" ]; then
+        local pid=$(cat ${pidfile})
+        if kill -0 ${pid} 2>/dev/null; then
+            echo "Stopping ${name}."
+            kill ${pid} 2>/dev/null
+            local i=0
+            while kill -0 ${pid} 2>/dev/null && [ ${i} -lt 10 ]; do
+                sleep 1
+                i=$((i + 1))
+            done
+            if kill -0 ${pid} 2>/dev/null; then
+                kill -9 ${pid} 2>/dev/null
+            fi
+        fi
+        rm -f ${pidfile}
+    else
+        echo "${name} is not running."
+    fi
+}
+
+easytier_status()
+{
+    if [ -f "${pidfile}" ] && kill -0 $(cat ${pidfile}) 2>/dev/null; then
+        echo "${name} is running as pid $(cat ${pidfile})."
+    else
+        echo "${name} is not running."
+        return 1
+    fi
+}
+
+easytier_restart()
+{
+    easytier_stop
+    sleep 1
+    easytier_start
+}
+
+run_rc_command "$1"

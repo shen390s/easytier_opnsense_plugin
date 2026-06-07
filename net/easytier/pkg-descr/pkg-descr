@@ -1,0 +1,12 @@
+EasyTier is a simple, decentralized mesh VPN with WireGuard support.
+
+It provides a peer-to-peer overlay network that connects devices
+across networks with features including:
+
+- Decentralized mesh networking
+- NAT traversal and smart routing
+- WireGuard protocol support
+- Subnet proxy (Point-to-Network)
+- Multi-platform support
+
+WWW: https://easytier.rs

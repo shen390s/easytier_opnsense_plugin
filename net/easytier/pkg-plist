@@ -1,0 +1,25 @@
+bin/easytier-core
+bin/easytier-cli
+etc/rc.d/easytier
+opnsense/mvc/app/controllers/OPNsense/EasyTier/GeneralController.php
+opnsense/mvc/app/controllers/OPNsense/EasyTier/Api/GeneralController.php
+opnsense/mvc/app/controllers/OPNsense/EasyTier/Api/ServiceController.php
+opnsense/mvc/app/controllers/OPNsense/EasyTier/forms/general.xml
+opnsense/mvc/app/models/OPNsense/EasyTier/EasyTier.php
+opnsense/mvc/app/models/OPNsense/EasyTier/EasyTier.xml
+opnsense/mvc/app/models/OPNsense/EasyTier/ACL/ACL.xml
+opnsense/mvc/app/models/OPNsense/EasyTier/Menu/Menu.xml
+opnsense/mvc/app/views/OPNsense/EasyTier/general.volt
+opnsense/scripts/OPNsense/EasyTier/reconfigure.sh
+opnsense/service/conf/actions.d/actions_easytier.conf
+opnsense/service/templates/OPNsense/EasyTier/+TARGETS
+opnsense/service/templates/OPNsense/EasyTier/easytier.conf
+@dir opnsense/mvc/app/controllers/OPNsense/EasyTier/Api
+@dir opnsense/mvc/app/controllers/OPNsense/EasyTier/forms
+@dir opnsense/mvc/app/controllers/OPNsense/EasyTier
+@dir opnsense/mvc/app/models/OPNsense/EasyTier/ACL
+@dir opnsense/mvc/app/models/OPNsense/EasyTier/Menu
+@dir opnsense/mvc/app/models/OPNsense/EasyTier
+@dir opnsense/mvc/app/views/OPNsense/EasyTier
+@dir opnsense/scripts/OPNsense/EasyTier
+@dir opnsense/service/templates/OPNsense/EasyTier
