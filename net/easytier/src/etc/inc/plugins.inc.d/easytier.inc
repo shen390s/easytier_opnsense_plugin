@@ -64,7 +64,7 @@ function easytier_firewall(\OPNsense\Firewall\Plugin $fw)
         $fw->registerFilterRule(
             1,
             [
-                'interface' => 'easytier',
+                'interface' => 'easytier0',
                 'descr' => 'EasyTier - allow all traffic on EasyTier interface',
                 'direction' => 'in',
                 '#ref' => 'ui/vpn/easytier',
@@ -74,7 +74,7 @@ function easytier_firewall(\OPNsense\Firewall\Plugin $fw)
         $fw->registerFilterRule(
             1,
             [
-                'interface' => 'easytier',
+                'interface' => 'easytier0',
                 'descr' => 'EasyTier - allow all outbound traffic on EasyTier interface',
                 'direction' => 'out',
                 '#ref' => 'ui/vpn/easytier',
