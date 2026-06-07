@@ -84,6 +84,18 @@
             <socks5_portal type="TextField">
                 <Required>N</Required>
             </socks5_portal>
+            <disable_sym_hole_punching type="BooleanField">
+                <default>0</default>
+                <Required>N</Required>
+            </disable_sym_hole_punching>
+            <disable_ipv6 type="BooleanField">
+                <default>0</default>
+                <Required>N</Required>
+            </disable_ipv6>
+            <private_mode type="BooleanField">
+                <default>0</default>
+                <Required>N</Required>
+            </private_mode>
         </general>
     </items>
 </model>

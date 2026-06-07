@@ -300,6 +300,10 @@ SRCDIR="/tmp/easytier_plugin/src"
 # rc.d service script
 install -m 0755 "${SRCDIR}/etc/rc.d/easytier" "${PREFIX}/etc/rc.d/easytier"
 
+# Plugin include (firewall and interface registration)
+install -m 0644 "${SRCDIR}/etc/inc/plugins.inc.d/easytier.inc" \
+    "${PREFIX}/etc/inc/plugins.inc.d/easytier.inc"
+
 # MVC Controllers
 mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api"
 mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/forms"
@@ -379,6 +383,7 @@ rm -f  "${PREFIX}/opnsense/service/conf/actions.d/actions_easytier.conf"
 rm -rf "${PREFIX}/opnsense/service/templates/OPNsense/EasyTier"
 rm -f  "${PREFIX}/etc/rc.d/easytier"
 rm -f  "${PREFIX}/etc/easytier.conf"
+rm -f  "${PREFIX}/etc/inc/plugins.inc.d/easytier.inc"
 
 # Remove binaries
 rm -f "${PREFIX}/bin/easytier-core"

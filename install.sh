@@ -190,6 +190,11 @@ install_plugin() {
     install -m 0755 "${srcdir}/etc/rc.d/easytier" "${PREFIX}/etc/rc.d/easytier"
     info "  Installed rc.d service script"
 
+    # Plugin include (firewall and interface registration)
+    install -m 0644 "${srcdir}/etc/inc/plugins.inc.d/easytier.inc" \
+        "${PREFIX}/etc/inc/plugins.inc.d/easytier.inc"
+    info "  Installed plugin include"
+
     # MVC Controllers
     mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/Api"
     mkdir -p "${PREFIX}/opnsense/mvc/app/controllers/OPNsense/EasyTier/forms"
@@ -244,6 +249,12 @@ install_plugin() {
         "${PREFIX}/opnsense/service/templates/OPNsense/EasyTier/easytier.conf"
     info "  Installed service templates"
 
+    # Syshook for boot-time autostart
+    mkdir -p "${PREFIX}/etc/rc.syshook.d/start"
+    install -m 0755 "${srcdir}/usr/local/etc/rc.syshook.d/start/99-easytier.sh" \
+        "${PREFIX}/etc/rc.syshook.d/start/99-easytier.sh"
+    info "  Installed syshook startup script"
+
     info "Plugin files installed successfully."
 }
 
@@ -275,6 +286,8 @@ uninstall() {
     rm -rf "${PREFIX}/opnsense/service/templates/OPNsense/EasyTier"
     rm -f  "${PREFIX}/etc/rc.d/easytier"
     rm -f  "${PREFIX}/etc/easytier.conf"
+    rm -f  "${PREFIX}/etc/inc/plugins.inc.d/easytier.inc"
+    rm -f  "${PREFIX}/etc/rc.syshook.d/start/99-easytier.sh"
 
     # Remove binaries
     info "Removing EasyTier binaries..."

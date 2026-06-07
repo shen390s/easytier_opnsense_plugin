@@ -31,6 +31,7 @@
 namespace OPNsense\EasyTier\Api;
 
 use OPNsense\Base\ApiMutableModelControllerBase;
+use OPNsense\Core\Config;
 
 class GeneralController extends ApiMutableModelControllerBase
 {
@@ -39,11 +40,33 @@ class GeneralController extends ApiMutableModelControllerBase
 
     public function getAction()
     {
-        return $this->getBase('general', 'general');
+        if ($this->request->isGet()) {
+            return $this->getModel()->getNodes();
+        }
+        return [];
     }
 
     public function setAction()
     {
-        return $this->setBase('general', 'general');
+        $result = ['result' => 'failed'];
+        if ($this->request->isPost()) {
+            $postData = $this->request->getPost(static::$internalModelName);
+            if (empty($postData)) {
+                $jsonBody = $this->request->getJsonRawBody();
+                if (is_array($jsonBody)) {
+                    $postData = $jsonBody[static::$internalModelName] ?? $jsonBody;
+                }
+            }
+            if (!empty($postData)) {
+                Config::getInstance()->lock();
+                $mdl = $this->getModel();
+                $mdl->setNodes($postData);
+                $result = $this->validate();
+                if (empty($result['result'])) {
+                    return $this->save(false, true);
+                }
+            }
+        }
+        return $result;
     }
 }

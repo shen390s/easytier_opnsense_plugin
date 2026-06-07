@@ -44,20 +44,23 @@
     <field>
         <id>general.listeners</id>
         <label>Listeners</label>
-        <type>text</type>
-        <help>Comma-separated list of listener URLs (e.g., udp://0.0.0.0:11010, tcp://0.0.0.0:11010).</help>
+        <type>textbox</type>
+        <height>3</height>
+        <help>Listener URLs, one per line (e.g., udp://0.0.0.0:11010). Comma-separated also accepted.</help>
     </field>
     <field>
         <id>general.peers</id>
         <label>Peer Nodes</label>
-        <type>text</type>
-        <help>Comma-separated list of peer URLs to connect to (e.g., udp://192.168.1.1:11010, tcp://example.com:11010).</help>
+        <type>textbox</type>
+        <height>3</height>
+        <help>Peer URLs to connect to, one per line (e.g., udp://192.168.1.1:11010). Comma-separated also accepted.</help>
     </field>
     <field>
         <id>general.proxy_networks</id>
         <label>Proxy Networks</label>
-        <type>text</type>
-        <help>Comma-separated list of networks to proxy in CIDR format (e.g., 192.168.1.0/24). Enables subnet proxy.</help>
+        <type>textbox</type>
+        <height>3</height>
+        <help>Networks to proxy in CIDR format, one per line (e.g., 192.168.1.0/24). Comma-separated also accepted.</help>
     </field>
     <field>
         <id>general.rpc_portal</id>
@@ -124,5 +127,23 @@
         <label>SOCKS5 Portal</label>
         <type>text</type>
         <help>Address and port for SOCKS5 proxy portal (e.g., 127.0.0.1:1080).</help>
+    </field>
+    <field>
+        <id>general.disable_sym_hole_punching</id>
+        <label>Disable Symmetric NAT Hole Punching</label>
+        <type>checkbox</type>
+        <help>Disable symmetric NAT hole punching for NAT traversal.</help>
+    </field>
+    <field>
+        <id>general.disable_ipv6</id>
+        <label>Disable IPv6</label>
+        <type>checkbox</type>
+        <help>Disable IPv6 support in EasyTier.</help>
+    </field>
+    <field>
+        <id>general.private_mode</id>
+        <label>Private Mode</label>
+        <type>checkbox</type>
+        <help>Enable private mode to prevent this node from being discovered by other networks.</help>
     </field>
 </form>
